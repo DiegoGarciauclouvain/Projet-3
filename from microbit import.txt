@@ -1,0 +1,11 @@
+from microbit import *
+import speech
+import radio
+import music
+
+radio.on()
+radio.config(group=1)
+
+while True:
+    radio.send("0x03|5|awake")
+    sleep(1000)

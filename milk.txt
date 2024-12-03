@@ -1,0 +1,67 @@
+from microbit import *
+import radio
+
+doses = 0
+max_doses = 10  
+
+def afficher_doses():
+    if doses == 0:
+        display.show(Image.SAD)  
+    else:
+        display.show(str(doses))  
+
+
+def ajouter_dose():
+    global doses
+    if doses < max_doses:  
+        doses += 1
+    afficher_doses()
+
+
+def supprimer_dose():
+    global doses
+    if doses > 0:  
+        doses -= 1
+    afficher_doses()
+
+def reinitialiser_doses():
+    global doses
+    doses = 0
+    afficher_doses()
+
+
+while True:
+    if button_a.is_pressed(): # Your new file!
+from microbit import *
+import speech
+import radio
+import music
+
+radio.on()
+radio.config(group=1)
+
+while True:
+    radio.send("0x03|5|awake")
+    sleep(1000)
+        ajouter_dose()
+        sleep(500)
+    elif button_b.is_pressed():  
+        supprimer_dose()
+        sleep(500)
+    elif button_a.is_pressed() and b# Your new file!
+from microbit import *
+import speech
+import radio
+import music
+
+radio.on()
+radio.config(group=1)
+
+while True:
+    radio.send("0x03|5|awake")
+    sleep(1000)utton_b.is_pressed():  
+        reinitialiser_doses()
+        sleep(500)
+   
+   
+    afficher_doses()
