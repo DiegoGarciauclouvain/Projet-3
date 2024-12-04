@@ -1,0 +1,52 @@
+from microbit import *
+import radio
+import time
+
+doses = 0
+max_doses = 10  
+lightsOn= False
+
+def afficher_doses():
+    if doses == 0:
+        lightsOn = False
+        
+    else:
+        display.show(str(doses))  
+
+
+def ajouter_dose():
+    global doses
+    if doses < max_doses:  
+        doses += 1
+    afficher_doses()
+
+
+def supprimer_dose():
+    global doses
+    if doses > 0:  
+        doses -= 1
+    afficher_doses()
+
+def reinitialiser_doses():
+    global doses
+    doses = 0
+    display.scroll(0)
+    afficher_doses()
+
+def getSoundLevel():
+    return microphone.sound_level()
+
+while True:
+    if button_a.is_pressed(): 
+        ajouter_dose()
+        sleep(500)
+    elif button_b.is_pressed():  
+        supprimer_dose()
+        sleep(500)
+    elif button_a.was_pressed() and button_b.was_pressed():  
+        reinitialiser_doses()
+        sleep(500)
+    elif doses == max_doses:
+        reinitialiser_doses() 
+         
+    afficher_doses()
