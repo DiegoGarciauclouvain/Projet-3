@@ -1,0 +1,84 @@
+# Imports go at the top
+from microbit import *
+import radio
+import music
+import time 
+radio.config(group=230)
+radio.on
+
+def vigenere(message, key, decryption=False):
+    text = ""
+    key_length = len(key)
+    key_as_int = [ord(k) for k in key]
+
+    for i, char in enumerate(str(message)):
+        #Letters encryption/decryption
+        if char.isalpha():
+            key_index = i % key_length
+            if decryption:
+                modified_char = chr((ord(char.upper()) - key_as_int[key_index] + 26) % 26 + ord('A'))
+            else : 
+                modified_char = chr((ord(char.upper()) + key_as_int[key_index] - 26) % 26 + ord('A'))
+            #Put back in lower case if it was
+            if char.islower():
+                modified_char = modified_char.lower()
+            text += modified_char
+        #Digits encryption/decryption
+        elif char.isdigit():
+            key_index = i % key_length
+            if decryption:
+                modified_char = str((int(char) - key_as_int[key_index]) % 10)
+            else:  
+                modified_char = str((int(char) + key_as_int[key_index]) % 10)
+            text += modified_char
+        else:
+            text += char
+    return text
+
+
+
+# Code in a 'while True:' loop repeats forever
+display.show(Image('05550:'
+                   '05005:'
+                   '05005:'
+                   '05550:'
+                   '05000:'
+                   '05000:'
+                  ))
+sleep(1000)
+display.scroll('Parent')
+
+while True:
+    if button_a.is_pressed() and button_b.is_pressed():  # Ambos botones presionados
+        start_time = time.ticks_ms()  # Capturar el tiempo cuando ambos botones son presionados
+        while button_a.is_pressed() and button_b.is_pressed():  # Mientras ambos botones estén presionados
+            # Si han pasado más de 1 segundo (1000 ms)
+            if time.ticks_ms() - start_time >= 1000:
+                sleep(500)
+    if button_a.was_pressed():
+        msg=vigenere("state","ahfurixkrunwcsuflency",False)
+        radio.send("string|5|"+msg)
+    if button_b.was_pressed():
+        msg=vigenere("milk","ahfurixkrunwcsuflency",False)
+        radio.send("string|4|"+msg)
+    msg=radio.receive()
+    if msg:
+        msg=msg.split("|")
+        if type(msg[0] is str):
+            msg[2]=vigenere(msg[2],"ahfurixkrunwcsuflency",True)
+            if(msg[2]=="alarmed"):
+                music.play(music.RINGTONE)
+            display.show(msg[2])
+            sleep(10000)
+        elif type(msg[0] is int and "°" in msg[2]):
+            degré=int(msg[2][int(msg[1])])-1
+            if(degré<22 and degré>15):
+                music.play(music.NYAN)
+        else:
+            display.show(int(msg[2]))
+    
+        
+
+    
+
+      
