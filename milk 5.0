@@ -5,8 +5,8 @@ import time
 doses = 0
 max_doses = 10
 
-# Tiempo máximo de inactividad en milisegundos (ej. 5 minutos = 300,000 ms)
-MAX_INACTIVITY_TIME = 30000  # 5 minutos
+# Tiempo máximo de inactividad en milisegundos 
+MAX_INACTIVITY_TIME = 30000  # 30 segundos 
 last_activity_time = time.ticks_ms()  # Guarda el último tiempo de actividad
 lightsOn = True  # Variable para controlar si la pantalla está encendida o apagada
 
