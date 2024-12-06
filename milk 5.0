@@ -1,0 +1,91 @@
+from microbit import *
+import time
+
+# Variables de dosis y configuración
+doses = 0
+max_doses = 10
+
+# Tiempo máximo de inactividad en milisegundos (ej. 5 minutos = 300,000 ms)
+MAX_INACTIVITY_TIME = 30000  # 5 minutos
+last_activity_time = time.ticks_ms()  # Guarda el último tiempo de actividad
+lightsOn = True  # Variable para controlar si la pantalla está encendida o apagada
+
+# Función para mostrar las dosis
+def afficher_doses():
+    if doses == 0:
+        display.clear()  # Limpiar la pantalla cuando no hay dosis
+    else:
+        display.show(str(doses))  # Mostrar el número de dosis
+
+# Función para agregar dosis
+def ajouter_dose():
+    global doses
+    if doses < max_doses:
+        doses += 1
+    afficher_doses()
+
+# Función para eliminar dosis
+def supprimer_dose():
+    global doses
+    if doses > 0:
+        doses -= 1
+    afficher_doses()
+
+# Función para reiniciar las dosis
+def reinitialiser_doses():
+    global doses
+    doses = 0
+    display.clear()  # Limpiar la pantalla cuando se reinicien las dosis
+    afficher_doses()
+
+# Función para manejar la inactividad
+def check_inactivity():
+    global last_activity_time, lightsOn
+    # Si ha pasado más de MAX_INACTIVITY_TIME desde la última actividad
+    if time.ticks_ms() - last_activity_time >= MAX_INACTIVITY_TIME:
+        if lightsOn:  # Si la pantalla está encendida
+            display.clear()  # Apagar la pantalla
+            lightsOn = False  # Cambiar el estado de la pantalla a apagada
+    else:
+        if not lightsOn:  # Si la pantalla está apagada pero hay actividad
+            lightsOn = True  # Encender la pantalla
+            afficher_doses()  # Mostrar las dosis
+
+# Función para resetear el temporizador de inactividad
+def reset_inactivity_timer():
+    global last_activity_time
+    last_activity_time = time.ticks_ms()  # Reinicia el temporizador
+
+# Bucle principal
+while True:
+    # Verificar inactividad
+    check_inactivity()
+
+    # Si se presionan ambos botones, reiniciar dosis
+    if button_a.is_pressed() and button_b.is_pressed():  # Ambos botones presionados
+        start_time = time.ticks_ms()  # Capturar el tiempo cuando ambos botones son presionados
+        while button_a.is_pressed() and button_b.is_pressed():  # Mientras ambos botones estén presionados
+            # Si han pasado más de 1 segundo (1000 ms)
+            if time.ticks_ms() - start_time >= 1000:
+                reinitialiser_doses()  # Reiniciar las dosis después de 1 segundo
+                break  # Salir del bucle después de reiniciar
+        reset_inactivity_timer()  # Reiniciar el temporizador de inactividad
+        sleep(500)  # Espera para evitar lecturas rápidas de los botones
+
+    elif button_a.is_pressed():  # Si solo se presiona el botón A, agregar una dosis
+        ajouter_dose()
+        reset_inactivity_timer()  # Reiniciar el temporizador de inactividad
+        sleep(500)  # Espera para evitar múltiples incrementos rápidos
+
+    elif button_b.is_pressed():  # Si solo se presiona el botón B, eliminar una dosis
+        supprimer_dose()
+        reset_inactivity_timer()  # Reiniciar el temporizador de inactividad
+        sleep(500)  # Espera para evitar múltiples decrementos rápidos
+
+    # Si las dosis alcanzan el máximo, reiniciar las dosis automáticamente
+    if doses == max_doses:
+        reinitialiser_doses()
+
+    # Siempre actualizar la pantalla si está encendida
+    if lightsOn:
+        afficher_doses()
