@@ -1,0 +1,6 @@
+from microbit import *
+
+while True:
+     if temperature()<15 and temperature()>24:
+         audio.play(Sound.TWINKLE)
+     sleep(10000)
