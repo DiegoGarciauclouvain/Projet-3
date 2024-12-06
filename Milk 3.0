@@ -1,0 +1,60 @@
+from microbit import *
+import time
+
+# Variables de dosis y configuración
+doses = 0
+max_doses = 10
+
+# Función para mostrar las dosis
+def afficher_doses():
+    if doses == 0:
+        display.clear()  # Limpiar la pantalla cuando no hay dosis
+    else:
+        display.show(str(doses))  # Mostrar el número de dosis
+
+# Función para agregar dosis
+def ajouter_dose():
+    global doses
+    if doses < max_doses:
+        doses += 1
+    afficher_doses()
+
+# Función para eliminar dosis
+def supprimer_dose():
+    global doses
+    if doses > 0:
+        doses -= 1
+    afficher_doses()
+
+# Función para reiniciar las dosis
+def reinitialiser_doses():
+    global doses
+    doses = 0
+    display.clear()  # Limpiar la pantalla cuando se reinicien las dosis
+    afficher_doses()
+
+# Bucle principal
+while True:
+    # Si se presiona el botón A, agregar una dosis
+    if button_a.is_pressed() and button_b.is_pressed():  # Ambos botones presionados
+        start_time = time.ticks_ms()  # Capturar el tiempo cuando ambos botones son presionados
+        while button_a.is_pressed() and button_b.is_pressed():  # Mientras ambos botones estén presionados
+            # Si han pasado más de 1 segundo (1000 ms)
+            if time.ticks_ms() - start_time >= 1000:
+                reinitialiser_doses()  # Reiniciar las dosis
+                break  # Salir del bucle después de reiniciar
+        sleep(500)  # Espera para evitar que el sistema se sobrecargue con múltiples lecturas rápidas
+    
+    elif button_a.is_pressed():  # Si solo se presiona el botón A, agregar una dosis
+        ajouter_dose()
+        sleep(500)  # Espera para evitar múltiples incrementos rápidos
+
+    elif button_b.is_pressed():  # Si solo se presiona el botón B, eliminar una dosis
+        supprimer_dose()
+        sleep(500)  # Espera para evitar múltiples decrementos rápidos
+
+    # Si las dosis alcanzan el máximo, reiniciar las dosis automáticamente
+    if doses == max_doses:
+        reinitialiser_doses()
+
+    afficher_doses() 
