@@ -1,0 +1,56 @@
+from microbit import *
+import radio
+import time
+
+doses = 0
+max_doses = 10
+
+def afficher_doses():
+    if doses == 0:
+        display.clear()  # Clear the display when no doses are left
+    else:
+        display.show(str(doses))  # Show the current number of doses
+
+def ajouter_dose():
+    global doses
+    if doses < max_doses:
+        doses += 1
+    afficher_doses()
+
+def supprimer_dose():
+    global doses
+    if doses > 0:
+        doses -= 1
+    afficher_doses()
+
+def reinitialiser_doses():
+    global doses
+    doses = 0
+    display.clear()  # Clear the display when doses are reset
+    afficher_doses()
+
+def getSoundLevel():
+    return microphone.sound_level()  # Assuming this is used for a sound-related function
+
+while True:
+    if button_a.is_pressed(): 
+        ajouter_dose()
+        sleep(500)  # Debounce delay
+    elif button_b.is_pressed():  
+        supprimer_dose()
+        sleep(500)  # Debounce delay
+    elif button_a.is_pressed() and button_b.is_pressed():
+        # Mantener presionado durante un segundo para reiniciar
+        start_time = time.ticks_ms()  # Capturar el tiempo actual
+        while button_a.is_pressed() and button_b.is_pressed():  # Mientras ambos estén presionados
+            # Comprobar si han pasado 1 segundo
+            if time.ticks_ms() - start_time >= 2:  # Si han pasado 1 segundo
+                reinitialiser_doses()  # Reiniciar dosis
+                break  # Salir del bucle una vez que se ha reiniciado
+        sleep(500)
+    
+    if doses == max_doses:
+        reinitialiser_doses()  # Reset doses if it reaches max_doses
+
+    # Always update display in the loop
+    afficher_doses()
