@@ -1,6 +1,9 @@
 from microbit import *
 import time
+import radio
 
+radio.on()
+radio.config(group=23)
 # Variables de dosis y configuración
 doses = 0
 max_doses = 10
@@ -55,6 +58,34 @@ def check_inactivity():
 def reset_inactivity_timer():
     global last_activity_time
     last_activity_time = time.ticks_ms()  # Reinicia el temporizador
+def vigenere(message, key, decryption=False):
+    text = ""
+    key_length = len(key)
+    key_as_int = [ord(k) for k in key]
+
+    for i, char in enumerate(str(message)):
+        #Letters encryption/decryption
+        if char.isalpha():
+            key_index = i % key_length
+            if decryption:
+                modified_char = chr((ord(char.upper()) - key_as_int[key_index] + 26) % 26 + ord('A'))
+            else : 
+                modified_char = chr((ord(char.upper()) + key_as_int[key_index] - 26) % 26 + ord('A'))
+            #Put back in lower case if it was
+            if char.islower():
+                modified_char = modified_char.lower()
+            text += modified_char
+        #Digits encryption/decryption
+        elif char.isdigit():
+            key_index = i % key_length
+            if decryption:
+                modified_char = str((int(char) - key_as_int[key_index]) % 10)
+            else:  
+                modified_char = str((int(char) + key_as_int[key_index]) % 10)
+            text += modified_char
+        else:
+            text += char
+    return text
 
 # Bucle principal
 while True:
@@ -85,7 +116,16 @@ while True:
     # Si las dosis alcanzan el máximo, reiniciar las dosis automáticamente
     if doses == max_doses:
         reinitialiser_doses()
-
+    msg=radio.receive()
+    if msg:
+        msg=msg.split("|")
+        if type(msg[0] is str):
+            msg[2]=vigenere(msg[2],"ahfurixkrunwcsuflency",True)
+            if(msg[2]=="milk"):
+                radio.send(str(doses))
+                sleep(1000)            
+        else:
+            display.show(int(msg[2]))
     # Siempre actualizar la pantalla si está encendida
     if lightsOn:
         afficher_doses()
