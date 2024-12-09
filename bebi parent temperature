@@ -35,7 +35,8 @@ def receive_temperature():
         try:
             decrypted_packet = vigenere(packet, KEY, decryption=True)
             if decrypted_packet.startswith("TEMP|"):
-                return int(decrypted_packet.split("|")[1])
+                # Supprimez "T" et "C" et récupérez uniquement la valeur numérique
+                return int(decrypted_packet.split("|")[2])  # L'index 2 contient la température sous forme numérique
         except Exception:
             pass
     return None
@@ -53,7 +54,7 @@ def main():
             while running_time() < timeout:
                 temperature = receive_temperature()
                 if temperature is not None:
-                    display.scroll("T:" + str(temperature) + "C")
+                    display.scroll(str(temperature))  # Affichage de la température sans "T" et "C"
                     break
             else:
                 display.scroll("No Resp")
