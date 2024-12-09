@@ -3,17 +3,13 @@ import radio
 
 # Configuration de la radio
 radio.on()
-radio.config(group=23, channel=2, address=0x11111111)  # Remplacez si nécessaire
-KEY = "SECRETKEY123"  # Remplacez par votre clé réelle
+radio.config(group=23, channel=2, address=0x11111111)  # Assurez-vous que les configurations sont identiques
+KEY = "SECRETKEY123"  # Clé fictive pour l'exemple
 
 def vigenere(message, key, decryption=False):
-    """
-    Implémente le chiffrement/déchiffrement de Vigenère.
-    """
     text = ""
     key_length = len(key)
     key_as_int = [ord(k) for k in key]
-
     for i, char in enumerate(str(message)):
         key_index = i % key_length
         if char.isalpha():
@@ -35,17 +31,9 @@ def vigenere(message, key, decryption=False):
     return text
 
 def measure_temperature():
-    """
-    Mesure la température ambiante et la renvoie.
-    Convertit l'unité interne du micro:bit en Celsius.
-    """
     return temperature()
 
 def main():
-    """
-    Code principal du bébé enfant.
-    Attend une requête et répond avec la température mesurée.
-    """
     while True:
         packet = radio.receive()
         if packet:
@@ -57,6 +45,6 @@ def main():
                     response = vigenere("TEMP|2|" + str(temp), KEY)
                     radio.send(response)
             except ValueError:
-                pass  # Ignore les messages mal formés
+                pass
 
 main()
