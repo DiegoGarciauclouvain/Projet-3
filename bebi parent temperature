@@ -1,0 +1,60 @@
+from microbit import *
+import radio
+
+KEY = "FICTIVE_KEY"  # Clé fictive pour l'exemple
+
+def vigenere(message, key, decryption=False):
+    text = ""
+    key_length = len(key)
+    key_as_int = [ord(k) for k in key]
+    for i, char in enumerate(str(message)):
+        key_index = i % key_length
+        if char.isalpha():
+            if decryption:
+                modified_char = chr((ord(char.upper()) - key_as_int[key_index] + 26) % 26 + ord('A'))
+            else:
+                modified_char = chr((ord(char.upper()) + key_as_int[key_index] - 26) % 26 + ord('A'))
+            if char.islower():
+                modified_char = modified_char.lower()
+            text += modified_char
+        elif char.isdigit():
+            if decryption:
+                modified_char = str((int(char) - key_as_int[key_index]) % 10)
+            else:
+                modified_char = str((int(char) + key_as_int[key_index]) % 10)
+            text += modified_char
+        else:
+            text += char
+    return text
+
+def receive_temperature():
+    packet = radio.receive()
+    if packet:
+        try:
+            decrypted_packet = vigenere(packet, KEY, decryption=True)
+            if decrypted_packet.startswith("TMP|"):
+                return int(decrypted_packet.split("|")[1])
+        except Exception:
+            pass
+    return None
+
+def main():
+    radio.on()
+    radio.config(group=1)
+    while True:
+        if button_a.is_pressed():  # Utilisez A pour simuler le bouton central
+            request = vigenere("REQ|3|TMP", KEY)
+            radio.send(request)
+            display.scroll("Req Sent")
+
+            timeout = running_time() + 5000  # Timeout de 5 secondes
+            while running_time() < timeout:
+                temperature = receive_temperature()
+                if temperature is not None:
+                    display.scroll("T:" + str(temperature) + "C")
+                    break
+            else:
+                display.scroll("No Resp")
+
+if __name__ == "__main__":
+    main()
