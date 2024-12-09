@@ -54,7 +54,7 @@ def main():
                 message_type, length, content = decrypted_packet.split('|')
                 if message_type == "REQ" and content == "TMP":
                     temp = measure_temperature()
-                    response = vigenere(f"TEMP|2|{temp}", KEY)
+                    response = vigenere("TEMP|2|" + str(temp), KEY)
                     radio.send(response)
             except ValueError:
                 pass  # Ignore les messages mal formés
