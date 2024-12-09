@@ -1,131 +1,159 @@
 from microbit import *
 import time
 import radio
+import music
 
 radio.on()
 radio.config(group=23)
-# Variables de dosis y configuración
+
+# Variables for dose and settings
 doses = 0
 max_doses = 10
 
-# Tiempo máximo de inactividad en milisegundos 
-MAX_INACTIVITY_TIME = 30000  # 30 segundos 
-last_activity_time = time.ticks_ms()  # Guarda el último tiempo de actividad
-lightsOn = True  # Variable para controlar si la pantalla está encendida o apagada
+# Maximum inactivity time in milliseconds 
+MAX_INACTIVITY_TIME = 30000  # 30 seconds 
+last_activity_time = time.ticks_ms()  # Record last activity time
+lightsOn = True  # Variable to control the display state (on/off)
 
-# Función para mostrar las dosis
+# Function to display doses
 def afficher_doses():
     if doses == 0:
-        display.clear()  # Limpiar la pantalla cuando no hay dosis
+        display.clear()  # Clear display if no doses
     else:
-        display.show(str(doses))  # Mostrar el número de dosis
+        display.show(str(doses))  # Show the number of doses
 
-# Función para agregar dosis
+# Function to add a dose
 def ajouter_dose():
     global doses
     if doses < max_doses:
         doses += 1
     afficher_doses()
 
-# Función para eliminar dosis
+# Function to remove a dose
 def supprimer_dose():
     global doses
     if doses > 0:
         doses -= 1
     afficher_doses()
 
-# Función para reiniciar las dosis
+# Function to reset doses
 def reinitialiser_doses():
     global doses
     doses = 0
-    display.clear()  # Limpiar la pantalla cuando se reinicien las dosis
+    display.clear()  # Clear display when doses are reset
     afficher_doses()
 
-# Función para manejar la inactividad
+# Function to handle inactivity (turn off display if idle)
 def check_inactivity():
     global last_activity_time, lightsOn
-    # Si ha pasado más de MAX_INACTIVITY_TIME desde la última actividad
     if time.ticks_ms() - last_activity_time >= MAX_INACTIVITY_TIME:
-        if lightsOn:  # Si la pantalla está encendida
-            display.clear()  # Apagar la pantalla
-            lightsOn = False  # Cambiar el estado de la pantalla a apagada
+        if lightsOn:  # If display is on
+            display.clear()  # Turn off display
+            lightsOn = False  # Update screen status
     else:
-        if not lightsOn:  # Si la pantalla está apagada pero hay actividad
-            lightsOn = True  # Encender la pantalla
-            afficher_doses()  # Mostrar las dosis
+        if not lightsOn:  # If display is off but there's activity
+            lightsOn = True  # Turn display back on
+            afficher_doses()  # Show doses
 
-# Función para resetear el temporizador de inactividad
+# Function to reset inactivity timer
 def reset_inactivity_timer():
     global last_activity_time
-    last_activity_time = time.ticks_ms()  # Reinicia el temporizador
+    last_activity_time = time.ticks_ms()  # Reset activity timer
+
+# Vigenère cipher for encryption and decryption
 def vigenere(message, key, decryption=False):
     text = ""
     key_length = len(key)
     key_as_int = [ord(k) for k in key]
 
     for i, char in enumerate(str(message)):
-        #Letters encryption/decryption
-        if char.isalpha():
+        if char.isalpha():  # Encrypt/Decrypt alphabetic characters
             key_index = i % key_length
             if decryption:
                 modified_char = chr((ord(char.upper()) - key_as_int[key_index] + 26) % 26 + ord('A'))
-            else : 
+            else:
                 modified_char = chr((ord(char.upper()) + key_as_int[key_index] - 26) % 26 + ord('A'))
-            #Put back in lower case if it was
             if char.islower():
                 modified_char = modified_char.lower()
             text += modified_char
-        #Digits encryption/decryption
-        elif char.isdigit():
+        elif char.isdigit():  # Encrypt/Decrypt numeric characters
             key_index = i % key_length
             if decryption:
                 modified_char = str((int(char) - key_as_int[key_index]) % 10)
-            else:  
+            else:
                 modified_char = str((int(char) + key_as_int[key_index]) % 10)
             text += modified_char
         else:
             text += char
     return text
 
-# Bucle principal
+# Main loop
 while True:
-    # Verificar inactividad
+    # Check inactivity
     check_inactivity()
 
-    # Si se presionan ambos botones, reiniciar dosis
-    if button_a.is_pressed() and button_b.is_pressed():  # Ambos botones presionados
-        start_time = time.ticks_ms()  # Capturar el tiempo cuando ambos botones son presionados
-        while button_a.is_pressed() and button_b.is_pressed():  # Mientras ambos botones estén presionados
-            # Si han pasado más de 1 segundo (1000 ms)
-            if time.ticks_ms() - start_time >= 1000:
-                reinitialiser_doses()  # Reiniciar las dosis después de 1 segundo
-                break  # Salir del bucle después de reiniciar
-        reset_inactivity_timer()  # Reiniciar el temporizador de inactividad
-        sleep(500)  # Espera para evitar lecturas rápidas de los botones
+    # Handle button presses
+    if button_a.is_pressed() and button_b.is_pressed():
+        start_time = time.ticks_ms()  # Start time when both buttons are pressed
+        while button_a.is_pressed() and button_b.is_pressed():
+            if time.ticks_ms() - start_time >= 1000:  # If held for 1 second
+                reinitialiser_doses()  # Reset doses
+                break
+        reset_inactivity_timer()  # Reset inactivity timer
+        sleep(500)  # Wait to avoid multiple button presses
 
-    elif button_a.is_pressed():  # Si solo se presiona el botón A, agregar una dosis
-        ajouter_dose()
-        reset_inactivity_timer()  # Reiniciar el temporizador de inactividad
-        sleep(500)  # Espera para evitar múltiples incrementos rápidos
+    elif button_a.is_pressed():
+        ajouter_dose()  # Add a dose when Button A is pressed
+        reset_inactivity_timer()  # Reset inactivity timer
+        sleep(500)  # Wait to avoid multiple presses
 
-    elif button_b.is_pressed():  # Si solo se presiona el botón B, eliminar una dosis
-        supprimer_dose()
-        reset_inactivity_timer()  # Reiniciar el temporizador de inactividad
-        sleep(500)  # Espera para evitar múltiples decrementos rápidos
+    elif button_b.is_pressed():
+        supprimer_dose()  # Remove a dose when Button B is pressed
+        reset_inactivity_timer()  # Reset inactivity timer
+        sleep(500)  # Wait to avoid multiple presses
 
-    # Si las dosis alcanzan el máximo, reiniciar las dosis automáticamente
+    # If logo is touched, show temperature
+    if pin_logo.is_touched():
+        display.scroll(temperature())
+
+    # Automatically reset doses if max is reached
     if doses == max_doses:
         reinitialiser_doses()
-    msg=radio.receive()
+
+    # Radio message handling
+    msg = radio.receive()
     if msg:
-        msg=msg.split("|")
-        if type(msg[0] is str):
-            msg[2]=vigenere(msg[2],"ahfurixkrunwcsuflency",True)
-            if(msg[2]=="milk"):
-                radio.send(str(doses))
-                sleep(1000)            
+        msg = msg.split("|")
+        if isinstance(msg[0], str):  # Check if the first part is a string
+            msg[2] = vigenere(msg[2], "ahfurixkrunwcsuflency", True)  # Decrypt the message
+            if msg[2] == "milk":  # If message is "milk"
+                radio.send(str(doses))  # Send the current dose count
+                sleep(1000)
         else:
-            display.show(int(msg[2]))
-    # Siempre actualizar la pantalla si está encendida
+            display.show(int(msg[2]))  # Show received dose number on display
+
+    # Always update display if lights are on
     if lightsOn:
         afficher_doses()
+
+    # Sound level detection and display updates
+    def getSoundLevel():
+        return microphone.sound_level()
+
+    sound_level = getSoundLevel()
+    
+    if 0 <= sound_level < 80:
+        msg=radio.receive()
+        if msg= 'baby etat':
+            radio.send(str('fine'))
+                          
+    elif 80 <= sound_level < 150:
+        msg=radio.receive()
+        if msg= 'baby etat'
+            radio.send(str('normal'))  
+    else:
+        radio.send(str('angry'))
+        
+        music.play(['C4:4', 'D4', 'E4', 'C4'])  # Play sound for high noise
+        music.play(['E4:4', 'F4', 'G4:8'])
+        sleep(5000)  # 
