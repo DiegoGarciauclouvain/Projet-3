@@ -4,14 +4,15 @@ import radio
 import music
 
 radio.on()
-radio.config(group=23)
+radio.config(group=23, channel=2, address=0x11111111)
+KEY = "ahfurixkrunwcsuflency"  
 
 # Variables for dose and settings
 doses = 0
 max_doses = 10
 
-# Maximum inactivity time in milliseconds 
-MAX_INACTIVITY_TIME = 30000  # 30 seconds 
+# Maximum inactivity time in milliseconds
+MAX_INACTIVITY_TIME = 30000  # 30 seconds
 last_activity_time = time.ticks_ms()  # Record last activity time
 lightsOn = True  # Variable to control the display state (on/off)
 
@@ -87,6 +88,10 @@ def vigenere(message, key, decryption=False):
             text += char
     return text
 
+# Function to measure the temperature
+def measure_temperature():
+    return temperature()
+
 # Main loop
 while True:
     # Check inactivity
@@ -125,7 +130,7 @@ while True:
     if msg:
         msg = msg.split("|")
         if isinstance(msg[0], str):  # Check if the first part is a string
-            msg[2] = vigenere(msg[2], "ahfurixkrunwcsuflency", True)  # Decrypt the message
+            msg[2] = vigenere(msg[2], KEY, True)  # Decrypt the message
             if msg[2] == "milk":  # If message is "milk"
                 radio.send(str(doses))  # Send the current dose count
                 sleep(1000)
@@ -137,23 +142,36 @@ while True:
         afficher_doses()
 
     # Sound level detection and display updates
-    def getSoundLevel():
-        return microphone.sound_level()
+    sound_level = microphone.sound_level()
 
-    sound_level = getSoundLevel()
-    
     if 0 <= sound_level < 80:
-        msg=radio.receive()
-        if msg= 'baby etat':
-            radio.send(str('fine'))
+        # Respond to 'baby etat' message with 'fine' if sound level is low
+        msg = radio.receive()
+        if msg == 'baby etat':
+            radio.send('fine')
                           
     elif 80 <= sound_level < 150:
-        msg=radio.receive()
-        if msg= 'baby etat'
-            radio.send(str('normal'))  
+        # Respond to 'baby etat' message with 'normal' if sound level is moderate
+        msg = radio.receive()
+        if msg == 'baby etat':
+            radio.send('normal')  
     else:
-        radio.send(str('angry'))
+        # Respond to 'baby etat' message with 'angry' if sound level is high
+        radio.send('angry')
+        sleep(5000)  #
+
+    def measure_temperature():
+        return temperature()
+            
         
-        music.play(['C4:4', 'D4', 'E4', 'C4'])  # Play sound for high noise
-        music.play(['E4:4', 'F4', 'G4:8'])
-        sleep(5000)  # 
+    packet = radio.receive()
+    if packet:
+        decrypted_packet = vigenere(packet, KEY, decryption=True)
+        try:
+            message_type, length, content = decrypted_packet.split('|')
+            if message_type == "REQ" and content == "TMP":
+                temp = measure_temperature()
+                response = vigenere("TEMP|3|" + str(temp), KEY)  # Envoi de la température sous forme complète
+                radio.send(response)
+        except ValueError:
+            pass  # Ignore les messages mal formés
