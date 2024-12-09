@@ -4,26 +4,28 @@ import radio
 # Configuration de la radio
 radio.on()
 radio.config(group=23, channel=2, address=0x11111111)  # Assurez-vous que les configurations sont identiques
-KEY = "SECRETKEY123"  # Clé fictive pour l'exemple
+KEY = "ahfurixkrunwcsuflency"  # Clé fictive pour l'exemple
 
 def vigenere(message, key, decryption=False):
     text = ""
     key_length = len(key)
     key_as_int = [ord(k) for k in key]
+
     for i, char in enumerate(str(message)):
-        key_index = i % key_length
         if char.isalpha():
+            key_index = i % key_length
             if decryption:
                 modified_char = chr((ord(char.upper()) - key_as_int[key_index] + 26) % 26 + ord('A'))
-            else:
+            else: 
                 modified_char = chr((ord(char.upper()) + key_as_int[key_index] - 26) % 26 + ord('A'))
             if char.islower():
                 modified_char = modified_char.lower()
             text += modified_char
         elif char.isdigit():
+            key_index = i % key_length
             if decryption:
                 modified_char = str((int(char) - key_as_int[key_index]) % 10)
-            else:
+            else:  
                 modified_char = str((int(char) + key_as_int[key_index]) % 10)
             text += modified_char
         else:
@@ -42,9 +44,10 @@ def main():
                 message_type, length, content = decrypted_packet.split('|')
                 if message_type == "REQ" and content == "TMP":
                     temp = measure_temperature()
-                    response = vigenere("TEMP|3|" + str(temp), KEY)  # Format ajusté pour envoyer la température entière
+                    response = vigenere("TEMP|3|" + str(temp), KEY)  # Envoi de la température sous forme complète
                     radio.send(response)
             except ValueError:
                 pass  # Ignore les messages mal formés
 
 main()
+
