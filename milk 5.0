@@ -1,11 +1,11 @@
 from microbit import *
 import time
 import radio
-import music
+
 
 radio.on()
 radio.config(group=23, channel=2, address=0x11111111)
-KEY = "ahfurixkrunwcsuflency"  
+microkey= "ahfurixkrunwcsuflency"  
 
 # Variables for dose and settings
 doses = 0
@@ -60,7 +60,29 @@ def check_inactivity():
 def reset_inactivity_timer():
     global last_activity_time
     last_activity_time = time.ticks_ms()  # Reset activity timer
-
+def create_tlv_message(type_id, value):
+    """
+    Crée un message TLV.
+    :param type_id: Type de la donnée (int)
+    :param value: Valeur (str ou bytes)
+    :return: Message TLV sous forme de bytes
+    """
+    if isinstance(value, str):
+        value = value.encode('utf-8')  # Convertir en bytes si nécessaire
+    length = len(value)
+    return bytes([type_id, length]) + value
+def parse_tlv_message(data):
+    """
+    Analyse un message TLV reçu.
+    :param data: Données reçues (bytes)
+    :return: Tuple (type, length, value)
+    """
+    if len(data) < 2:
+        return None  # Message invalide
+    type = data[0]
+    length = data[1]
+    value = data[2:2+length]
+    return [type, length, value] 
 # Vigenère cipher for encryption and decryption
 def vigenere(message, key, decryption=False):
     text = ""
@@ -91,6 +113,18 @@ def vigenere(message, key, decryption=False):
 # Function to measure the temperature
 def measure_temperature():
     return temperature()
+
+def baby_state():
+    # Check if the sound level is low (0 <= sound_level < 80)
+    if 0 <= sound_level < 80:
+        return "calm"     
+    
+    # Check if the sound level is moderate (80 <= sound_level < 150)
+    elif 80 <= sound_level < 150:
+        return "normal"
+    # Check if the sound level is high (sound_level >= 150)
+    else:
+        return "angry"  
 
 # Main loop
 while True:
@@ -126,52 +160,46 @@ while True:
         reinitialiser_doses()
 
     # Radio message handling
-    msg = radio.receive()
+    msg = radio.receive_bytes()
     if msg:
-        msg = msg.split("|")
-        if isinstance(msg[0], str):  # Check if the first part is a string
-            msg[2] = vigenere(msg[2], KEY, True)  # Decrypt the message
-            if msg[2] == "milk":  # If message is "milk"
-                radio.send(str(doses))  # Send the current dose count
-                sleep(1000)
-        else:
-            display.show(int(msg[2]))  # Show received dose number on display
+        msg = parse_tlv_message(msg)
+        if msg:
+            msg[2].decode('utf-8')
+            if(msg[0] is 0x01):
+                break
+            elif (msg[0] is 0x02):
+                msg[2]=vigenere(msg[2],"ahfurixkrunwcsuflency",True)
+                if msg[2]== 'milk':
+                    msg=vigenere(str(doses),microkey,False)
+                    msg=create_tlv_message(0x03,msg)
+                    radio.send_bytes(msg)
+                if msg[2]== 'state':
+                    msg=vigenere(baby_state(),microkey,False)
+                    msg=create_tlv_message(0x03,msg)
+                    radio.send_bytes(msg)
+                if msg[2]== 'temperature':
+                    msg=vigenere(baby_state(),microkey,False)
+                    msg=create_tlv_message(0x02,msg)
+                    radio.send_bytes(msg)
+            else:
+                display.show(int(msg[2]))  # Show received dose number on display
 
     # Always update display if lights are on
     if lightsOn:
         afficher_doses()
 
-    # Sound level detection and display updates
+    
     sound_level = microphone.sound_level()
 
-    if 0 <= sound_level < 80:
-        # Respond to 'baby etat' message with 'fine' if sound level is low
-        msg = radio.receive()
-        if msg == 'baby etat':
-            radio.send('fine')
-                          
-    elif 80 <= sound_level < 150:
-        # Respond to 'baby etat' message with 'normal' if sound level is moderate
-        msg = radio.receive()
-        if msg == 'baby etat':
-            radio.send('normal')  
-    else:
-        # Respond to 'baby etat' message with 'angry' if sound level is high
-        radio.send('angry')
-        sleep(5000)  #
-
-    def measure_temperature():
-        return temperature()
-            
         
     packet = radio.receive()
     if packet:
-        decrypted_packet = vigenere(packet, KEY, decryption=True)
+        decrypted_packet = vigenere(packet, microkey, decryption=True)
         try:
             message_type, length, content = decrypted_packet.split('|')
             if message_type == "REQ" and content == "TMP":
                 temp = measure_temperature()
-                response = vigenere("TEMP|3|" + str(temp), KEY)  # Envoi de la température sous forme complète
-                radio.send(response)
+                response = vigenere("TEMP|3|" + str(temp), microkey)  # Envoi de la température sous forme complète
+                radio.send_bytes()
         except ValueError:
             pass  # Ignore les messages mal formés
