@@ -1,0 +1,175 @@
+# Imports go at the top
+from microbit import *
+import radio
+import music
+import time
+import random
+microkey="ahfurixkrunwcsuflency"
+radio.config(group=230,channel=2,address=0x11111111)
+radio.on
+
+def hashing(string):
+	"""
+	Hachage d'une chaîne de caractères fournie en paramètre.
+	Le résultat est une chaîne de caractères.
+	Attention : cette technique de hachage n'est pas suffisante (hachage dit cryptographique) pour une utilisation en dehors du cours.
+
+	:param (str) string: la chaîne de caractères à hacher
+	:return (str): le résultat du hachage
+	"""
+	def to_32(value):
+		"""
+		Fonction interne utilisée par hashing.
+		Convertit une valeur en un entier signé de 32 bits.
+		Si 'value' est un entier plus grand que 2 ** 31, il sera tronqué.
+
+		:param (int) value: valeur du caractère transformé par la valeur de hachage de cette itération
+		:return (int): entier signé de 32 bits représentant 'value'
+		"""
+		value = value % (2 ** 32)
+		if value >= 2**31:
+			value = value - 2 ** 32
+		value = int(value)
+		return value
+
+	if string:
+		x = ord(string[0]) << 7
+		m = 1000003
+		for c in string:
+			x = to_32((x*m) ^ ord(c))
+		x ^= len(string)
+		if x == -1:
+			x = -2
+		return str(x)
+	return ""
+def create_tlv_message(type_id, value):
+    """
+    Crée un message TLV.
+    :param type_id: Type de la donnée (int)
+    :param value: Valeur (str ou bytes)
+    :return: Message TLV sous forme de bytes
+    """
+    if isinstance(value, str):
+        value = value.encode('utf-8')  # Convertir en bytes si nécessaire
+    length = len(value)
+    return bytes([type_id, length]) + value
+def parse_tlv_message(data):
+    """
+    Analyse un message TLV reçu.
+    :param data: Données reçues (bytes)
+    :return: Tuple (type, length, value)
+    """
+    if len(data) < 2:
+        return None  # Message invalide
+    type = data[0]
+    length = data[1]
+    value = data[2:2+length]
+    return [type, length, value]   
+def vigenere(message, key, decryption=False):
+    text = ""
+    key_length = len(key)
+    key_as_int = [ord(k) for k in key]
+
+    for i, char in enumerate(str(message)):
+        #Letters encryption/decryption
+        if char.isalpha():
+            key_index = i % key_length
+            if decryption:
+                modified_char = chr((ord(char.upper()) - key_as_int[key_index] + 26) % 26 + ord('A'))
+            else : 
+                modified_char = chr((ord(char.upper()) + key_as_int[key_index] - 26) % 26 + ord('A'))
+            #Put back in lower case if it was
+            if char.islower():
+                modified_char = modified_char.lower()
+            text += modified_char
+        #Digits encryption/decryption
+        elif char.isdigit():
+            key_index = i % key_length
+            if decryption:
+                modified_char = str((int(char) - key_as_int[key_index]) % 10)
+            else:  
+                modified_char = str((int(char) + key_as_int[key_index]) % 10)
+            text += modified_char
+        else:
+            text += char
+    return text
+
+
+
+
+
+
+
+
+
+
+# Code in a 'while True:' loop repeats forever
+display.show(Image('05550:'
+                   '05005:'
+                   '05005:'
+                   '05550:'
+                   '05000:'
+                   '05000:'
+                  ))
+display.scroll('Parent')
+sleep(1000)
+
+while True:
+    if button_a.is_pressed() and button_b.is_pressed():  # Ambos botones presionados
+        start_time = time.ticks_ms()  # Capturar el tiempo cuando ambos botones son presionados
+        while button_a.is_pressed() and button_b.is_pressed():  # Mientras ambos botones estén presionados
+            # Si han pasado más de 1 segundo (1000 ms)
+            if time.ticks_ms() - start_time >= 1000:
+                sleep(500)
+    if button_a.was_pressed():
+        msg=vigenere("state",microkey,False)
+        msg=create_tlv_message(0x02,msg)
+        radio.send_bytes(msg)
+    if button_b.was_pressed():
+        msg=vigenere("milk",microkey,False)
+        msg=create_tlv_message(0x02,msg)
+        radio.send_bytes(msg)
+    if pin_logo.is_touched():
+        msg=vigenere("temperature",microkey,False)
+        msg=create_tlv_message(0x02,msg)
+        radio.send_bytes(msg)
+    msg=radio.receive_bytes()
+    if msg:
+        msg=parse_tlv_message(msg)
+        if msg:
+            msg[2].decode('utf-8')
+            if(msg[0] is 0x01):
+                total=msg[2].split(":")
+                random.seed(total[1])
+                challenge_response = random.randint(0, 2**32-1)
+                hashed=hashing(challenge_response)
+                nonce2 = random.randint(0, 2**32-1)
+                complete=str(nonce2)+":"+str(hashed)
+                complete=vigenere(complete,microkey,True)
+                message=create_tlv_message(0x01,complete)
+                
+            elif (msg[0] is 0x02):
+                msg[2]=vigenere(msg[2],microkey,True)
+                if(msg[2]=="angry"):
+                    music.play(music.RINGTONE)
+                    display.show(msg[2])
+                    sleep(10000)
+            elif (msg[0] is 0x03 and "°" in msg[2]):
+                degré=int(msg[2][int(msg[1])])-1
+                display.show(degré)
+                sleep(10000)
+                if(degré<22 and degré>15):
+                    music.play(music.NYAN)
+            elif(msg[0] is 0x04):
+                msg[2]=vigenere(msg[2],microkey,True)
+                microkey=msg[2]
+                display.show("established")
+            else:
+                display.show(int(msg[2]))
+                sleep(10000)
+    
+        
+
+    
+
+      
