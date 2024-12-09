@@ -1,6 +1,8 @@
 from microbit import *
 import radio
 
+radio.on()
+radio.config(group=23, channel=2, address=0x11111111)
 KEY = "SECRETKEY123"  # Clé fictive pour l'exemple
 
 def vigenere(message, key, decryption=False):
