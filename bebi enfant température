@@ -1,0 +1,62 @@
+from microbit import *
+import radio
+
+# Configuration de la radio
+radio.on()
+radio.config(group=23, channel=2, address=0x11111111)  # Remplacez si nécessaire
+KEY = "SECRETKEY123"  # Remplacez par votre clé réelle
+
+def vigenere(message, key, decryption=False):
+    """
+    Implémente le chiffrement/déchiffrement de Vigenère.
+    """
+    text = ""
+    key_length = len(key)
+    key_as_int = [ord(k) for k in key]
+
+    for i, char in enumerate(str(message)):
+        key_index = i % key_length
+        if char.isalpha():
+            if decryption:
+                modified_char = chr((ord(char.upper()) - key_as_int[key_index] + 26) % 26 + ord('A'))
+            else:
+                modified_char = chr((ord(char.upper()) + key_as_int[key_index] - 26) % 26 + ord('A'))
+            if char.islower():
+                modified_char = modified_char.lower()
+            text += modified_char
+        elif char.isdigit():
+            if decryption:
+                modified_char = str((int(char) - key_as_int[key_index]) % 10)
+            else:
+                modified_char = str((int(char) + key_as_int[key_index]) % 10)
+            text += modified_char
+        else:
+            text += char
+    return text
+
+def measure_temperature():
+    """
+    Mesure la température ambiante et la renvoie.
+    Convertit l'unité interne du micro:bit en Celsius.
+    """
+    return temperature()
+
+def main():
+    """
+    Code principal du bébé enfant.
+    Attend une requête et répond avec la température mesurée.
+    """
+    while True:
+        packet = radio.receive()
+        if packet:
+            decrypted_packet = vigenere(packet, KEY, decryption=True)
+            try:
+                message_type, length, content = decrypted_packet.split('|')
+                if message_type == "REQ" and content == "TMP":
+                    temp = measure_temperature()
+                    response = vigenere(f"TEMP|2|{temp}", KEY)
+                    radio.send(response)
+            except ValueError:
+                pass  # Ignore les messages mal formés
+
+main()
