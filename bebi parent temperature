@@ -1,7 +1,8 @@
 from microbit import *
 import radio
 
-
+radio.on()
+radio.config(group=23, channel=2, address=0x11111111)  # Assurez-vous que les configurations sont identiques
 KEY = "SECRETKEY123"  # Clé fictive pour l'exemple
 
 def vigenere(message, key, decryption=False):
@@ -33,7 +34,7 @@ def receive_temperature():
     if packet:
         try:
             decrypted_packet = vigenere(packet, KEY, decryption=True)
-            if decrypted_packet.startswith("TMP|"):
+            if decrypted_packet.startswith("TEMP|"):
                 return int(decrypted_packet.split("|")[1])
         except Exception:
             pass
@@ -41,7 +42,7 @@ def receive_temperature():
 
 def main():
     radio.on()
-    radio.config(group=23, channel=2, address=0x11111111)
+    radio.config(group=23, channel=2, address=0x11111111)  # Assurez-vous que les configurations sont identiques
     while True:
         if button_a.is_pressed():  # Utilisez A pour simuler le bouton central
             request = vigenere("REQ|3|TMP", KEY)
