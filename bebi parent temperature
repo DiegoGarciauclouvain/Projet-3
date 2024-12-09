@@ -48,7 +48,7 @@ def main():
         if button_a.is_pressed():  # Utilisez A pour simuler le bouton central
             request = vigenere("REQ|3|TMP", KEY)
             radio.send(request)
-            display.scroll("Req Sent")
+        
 
             timeout = running_time() + 5000  # Timeout de 5 secondes
             while running_time() < timeout:
