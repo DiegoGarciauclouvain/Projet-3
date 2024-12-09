@@ -1,7 +1,7 @@
 from microbit import *
 import radio
 
-KEY = "FICTIVE_KEY"  # Clé fictive pour l'exemple
+KEY = "SECRETKEY123"  # Clé fictive pour l'exemple
 
 def vigenere(message, key, decryption=False):
     text = ""
