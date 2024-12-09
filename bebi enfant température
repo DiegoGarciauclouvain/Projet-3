@@ -42,9 +42,9 @@ def main():
                 message_type, length, content = decrypted_packet.split('|')
                 if message_type == "REQ" and content == "TMP":
                     temp = measure_temperature()
-                    response = vigenere("TEMP|2|" + str(temp), KEY)
+                    response = vigenere("TEMP|3|" + str(temp), KEY)  # Format ajusté pour envoyer la température entière
                     radio.send(response)
             except ValueError:
-                pass
+                pass  # Ignore les messages mal formés
 
 main()
